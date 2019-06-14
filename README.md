@@ -34,3 +34,5 @@ super cool because it is a real raytracer, work could be achieved by generating 
 BUT stucked by the limitation of memory due to compilation of the code using webassembly in bundle.js > flag ALLOW_MEMORY_GROWTH should be set to 1
 
 contact: thomas.kjeldsen@alexandra.dk, could be solved by contacting him, but no garantee
+
+profile on researchgate: https://www.researchgate.net/profile/Thomas_Kjeldsen
