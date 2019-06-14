@@ -26,3 +26,11 @@ out-of-the-box results:
 - OK: meshes, camera (to be fixed), point lights, animations (to be fixed), textures
 - NOT SURE: spot lights should be exported, but can not see where they are in gltf-viewer... -> investigate the loaded scene programmatically
 - KO: directional lights, materials
+
+### webraytracer by alexandra.dk
+
+super cool because it is a real raytracer, work could be achieved by generating all meshes for each objects in blender, exported in collada
+
+BUT stucked by the limitation of memory due to compilation of the code using webassembly in bundle.js > flag ALLOW_MEMORY_GROWTH should be set to 1
+
+contact: thomas.kjeldsen@alexandra.dk, could be solved by contacting him, but no garantee
