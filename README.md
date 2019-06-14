@@ -4,9 +4,12 @@
 
 ### 3d engine online
 
-- threejs.org
+- threejs.org + https://threejs.org/examples/raytracing_sandbox.html
+- THREE.js-PathTracing-Renderer: https://github.com/erichlof/THREE.js-PathTracing-Renderer [ to test! ]
 - WebGL Raytracing: http://webraytracer.alexandra.dk/
-- Realtime GLSL Pathtracing: https://geometrian.com/programming/webgl-pt/
+- Realtime GLSL Pathtracing: https://geometrian.com/programming/webgl-pt/ - https://github.com/nikolaiartemiev/webgl-pathtracer/blob/master/render.png
+- FSPT: https://github.com/apbodnar/FSPT
+- retrace.gl: https://github.com/stasilo/retrace.gl
 
 ### about json export for threejs
 
