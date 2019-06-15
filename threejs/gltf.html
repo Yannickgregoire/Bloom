@@ -30,13 +30,28 @@
 		<script src="js/PMREMCubeUVPacker.js"></script>
 
 		<script>
+			
+			var colorkey_color = 0x00ffff;
+			
+			// see https://en.wikipedia.org/wiki/Display_resolution#/media/File:Vector_Video_Standards8.svg
+			var resolutions = {
+				'wvga (ntsc)': [854,480],
+				'pal†': [1024,576],
+				'hd 720': [1280,720],
+				'hd 1080': [1920,1080]
+			};
+			
+			var mask_strategies = [ 'colorkey', 'hide' ];
+			
 			var orbitControls;
 			var container, camera, scene, renderer, loader;
-			var gltf, background, envMap, mixer, gui, extensionControls;
+			var gltf, background, envMap, mixer, gui, ext_ctrl, anim_ctrl, render_object_ctrl;
+			
+			var colorkey_mat = new THREE.MeshBasicMaterial( { 'color': colorkey_color } );
 
 			var clock = new THREE.Clock();
 			
-			var renderable_objects = [];
+			var renderable_objects = {};
 
 			var scenes = {
 				'Tester': {
@@ -53,22 +68,25 @@
 
 			var state = {
 				scene: Object.keys( scenes )[ 0 ],
+				resolution: Object.keys( resolutions )[ 0 ],
+				mask_strategy: mask_strategies[ 0 ],
+				render_object: null,
 				extension: scenes[ Object.keys( scenes )[ 0 ] ].extensions[ 0 ],
-				playAnimation: true
+				play_animation: true
 			};
 
 			function onload() {
 
 				container = document.getElementById( 'container' );
 
-				renderer = new THREE.WebGLRenderer( { antialias: true } );
+				renderer = new THREE.WebGLRenderer( { antialias: true, alpha: true } );
 				renderer.setPixelRatio( window.devicePixelRatio );
-				renderer.setSize( window.innerWidth, window.innerHeight );
+				renderer.setSize( resolutions[ state.resolution ][ 0 ], resolutions[ state.resolution ][ 1 ]  );
 				renderer.gammaOutput = true;
 				renderer.physicallyCorrectLights = true;
 				container.appendChild( renderer.domElement );
 
-				window.addEventListener( 'resize', onWindowResize, false );
+				//window.addEventListener( 'resize', render_resize, false );
 
 				// Load background and generate envMap
 
@@ -110,12 +128,12 @@
 				}
 
 				scene = new THREE.Scene();
-				scene.background = new THREE.Color( 0x222222 );
+				//scene.background = new THREE.Color( colorkey_color );
 
 				var spot1;
 
 				if ( sceneInfo.addLights ) {
-					var ambient = new THREE.AmbientLight( 0x222222 );
+					var ambient = new THREE.AmbientLight( 0xffffff );
 					scene.add( ambient );
 					var directionalLight = new THREE.DirectionalLight( 0xdddddd, 4 );
 					directionalLight.position.set( 0, 0, 1 ).normalize();
@@ -172,7 +190,11 @@
 				}
 
 				var loadStartTime = performance.now();
-
+				
+				// dropping all references to previous render_objects
+				renderable_objects = { 'none': {} };
+				state.render_objects = null;
+				
 				loader.load( url, function ( data ) {
 					
 					gltf = data;
@@ -198,6 +220,11 @@
 							node.castShadow = true;
 							node.receiveShadow = true;
 							
+							renderable_objects[ node.name ] = {
+								'node': node,
+								'material': node.material.clone()
+							}
+							
 							// console.log( node.material );
 						
 						} else if ( node.isLight ) { 
@@ -209,8 +236,9 @@
 						} else if ( node.isCamera && camera == undefined ) { 
 						
 							console.log( "FOUND THE CAMERA" );
-							console.log( node );
+							//console.log( node );
 							camera = node;
+							console.log( camera.aspect );
 							
 						} else {
 							
@@ -231,12 +259,13 @@
 								animation.duration = sceneInfo.animationTime;
 							}
 							var action = mixer.clipAction( animation );
-							if ( state.playAnimation ) action.play();
+							if ( state.play_animation ) action.play();
 						}
 					}
 
 					scene.add( object );
-					onWindowResize();
+					select_strategy();
+					render_resize();
 
 				}, undefined, function ( error ) {
 					console.error( error );
@@ -244,12 +273,16 @@
 
 			}
 
-			function onWindowResize() {
-
-				camera.aspect = container.offsetWidth / container.offsetHeight;
+			function render_resize() {
+			
+				camera.aspect = resolutions[ state.resolution ][ 0 ] / resolutions[ state.resolution ][ 1 ];
 				camera.updateProjectionMatrix();
-
-				renderer.setSize( window.innerWidth, window.innerHeight );
+				renderer.setSize( resolutions[ state.resolution ][ 0 ], resolutions[ state.resolution ][ 1 ]  );
+				stop_animations();
+				
+				//camera.aspect = container.offsetWidth / container.offsetHeight;
+				//camera.updateProjectionMatrix();
+				//renderer.setSize( window.innerWidth, window.innerHeight );
 
 			}
 
@@ -257,7 +290,7 @@
 				
 				requestAnimationFrame( animate );
 
-				if ( mixer ) mixer.update( clock.getDelta() );
+				if ( mixer ) mixer.update( 0.033 );
 				if ( orbitControls ) orbitControls.update();
 				
 				render();
@@ -275,41 +308,129 @@
 				gui = new dat.GUI( { width: 330 } );
 				gui.domElement.parentElement.style.zIndex = 101;
 
-				var sceneCtrl = gui.add( state, 'scene', Object.keys( scenes ) );
-				sceneCtrl.onChange( reload );
-
-				var animCtrl = gui.add( state, 'playAnimation' );
-				animCtrl.onChange( toggleAnimations );
-
+				var resolution_ctrl = gui.add( state, 'resolution', Object.keys( resolutions ) );
+				resolution_ctrl.onChange( render_resize );
+				
+				var scene_ctrl = gui.add( state, 'scene', Object.keys( scenes ) );
+				scene_ctrl.onChange( reload );
+				
+				var strategy_ctrl = gui.add( state, 'mask_strategy', mask_strategies );
+				strategy_ctrl.onChange( select_strategy );
+				
 				updateGUI();
 
 			}
 
 			function updateGUI() {
 
-				if ( extensionControls ) extensionControls.remove();
+				if ( ext_ctrl ) ext_ctrl.remove();
 
 				var sceneInfo = scenes[ state.scene ];
 
 				if ( sceneInfo.extensions.indexOf( state.extension ) === - 1 ) {
-
 					state.extension = sceneInfo.extensions[ 0 ];
-
 				}
 
-				extensionControls = gui.add( state, 'extension', sceneInfo.extensions );
-				extensionControls.onChange( reload );
+				ext_ctrl = gui.add( state, 'extension', sceneInfo.extensions );
+				ext_ctrl.onChange( reload );
+				
+				if ( render_object_ctrl ) render_object_ctrl.remove();
+				render_object_ctrl = gui.add( state, 'render_object', Object.keys( renderable_objects ) );
+				render_object_ctrl.onChange( select_object );
+				
+				if ( state.render_object == undefined ) return;
+				
+				if ( anim_ctrl ) anim_ctrl.remove();
+				
+				anim_ctrl = gui.add( state, 'play_animation' );
+				anim_ctrl.onChange( toggle_animations );
 
 			}
-
-			function toggleAnimations() {
-
+			
+			function select_strategy() {
+				
+				// 'colorkey', 'hide'
+				
+				switch ( state.mask_strategy ) {
+					
+					case 'colorkey':
+						renderer.setClearColor( colorkey_color, 1 );
+						break;
+						
+					case 'hide':
+						renderer.setClearColor( 0x000000, 0 );
+						break;
+				
+				}
+				
+				select_object();
+				
+			}
+			
+			function select_object() {
+				
+				console.log( state.render_object );
+				
+				if ( state.render_object == 'none' || state.render_object == null ) {
+					
+					for ( var k in renderable_objects ) {
+						if ( k == 'none' ) {
+							continue;
+						}
+						renderable_objects[k].node.visible = true;
+						renderable_objects[k].node.material = renderable_objects[k].material;
+					}
+					state.render_object = null;
+					return;
+					
+				} else {
+				
+					for ( var k in renderable_objects ) {
+						if ( k == 'none' ) {
+							continue;
+						}
+						switch( state.mask_strategy ) {
+							case 'hide':
+								renderable_objects[k].node.material = renderable_objects[k].material;
+								if ( k == state.render_object ) {
+									renderable_objects[k].node.visible = true;
+								} else {
+									renderable_objects[k].node.visible = false;
+								}
+									break;
+							case 'colorkey':
+								renderable_objects[k].node.visible = true;
+								if ( k == state.render_object ) {
+									renderable_objects[k].node.material = renderable_objects[k].material;
+								} else {
+									renderable_objects[k].node.material = colorkey_mat;
+								}
+									break;
+						}
+					}
+					
+				}
+				
+				updateGUI();
+				
+			}
+			
+			function stop_animations() {
 				for ( var i = 0; i < gltf.animations.length; i ++ ) {
 					var clip = gltf.animations[ i ];
 					var action = mixer.existingAction( clip );
-					state.playAnimation ? action.play() : action.stop();
+					action.stop();
 				}
-				
+				state.play_animation = false;
+				updateGUI();
+			}
+
+			function toggle_animations() {
+				for ( var i = 0; i < gltf.animations.length; i ++ ) {
+					var clip = gltf.animations[ i ];
+					var action = mixer.existingAction( clip );
+					state.play_animation ? action.play() : action.stop();
+				}
 			}
 
 			function reload() {

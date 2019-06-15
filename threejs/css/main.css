@@ -5,6 +5,7 @@ body {
 	font-family: Monospace;
 	font-size: 13px;
 	line-height: 24px;
+	background: url( '../textures/abstract-geometric-pattern-background_1319-242.jpg' );
 }
 
 a {
@@ -23,6 +24,8 @@ button {
 
 canvas {
 	display: block;
+	margin: 20px;
+	border: 1px dotted #555;
 }
 
 #info {
