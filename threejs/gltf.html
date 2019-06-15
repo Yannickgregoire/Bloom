@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-		<title>three.js webgl - glTF 2.0 - extensions</title>
+		<title>bloom renderer</title>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 		<link type="text/css" rel="stylesheet" href="css/main.css">
@@ -28,6 +28,16 @@
 
 		<script src="js/PMREMGenerator.js"></script>
 		<script src="js/PMREMCubeUVPacker.js"></script>
+		
+		<script src="js/shaders/CopyShader.js"></script>
+		<script src="js/shaders/DigitalGlitch.js"></script>
+		<script src="js/shaders/Colorkey.js"></script>
+
+		<script src="js/EffectComposer.js"></script>
+		<script src="js/RenderPass.js"></script>
+		<script src="js/ShaderPass.js"></script>
+		<script src="js/GlitchPass.js"></script>
+		<script src="js/ColorkeyPass.js"></script>
 
 		<script>
 			
@@ -44,7 +54,7 @@
 			var mask_strategies = [ 'colorkey', 'hide' ];
 			
 			var orbitControls;
-			var container, camera, scene, renderer, loader;
+			var container, camera, scene, renderer, render_scene, loader, composer, colorkey_pass;
 			var gltf, background, envMap, mixer, gui, ext_ctrl, anim_ctrl, render_object_ctrl;
 			
 			var colorkey_mat = new THREE.MeshBasicMaterial( { 'color': colorkey_color } );
@@ -72,14 +82,18 @@
 				mask_strategy: mask_strategies[ 0 ],
 				render_object: null,
 				extension: scenes[ Object.keys( scenes )[ 0 ] ].extensions[ 0 ],
-				play_animation: true
+				play_animation: true,
+				colorkey_red: 0,
+				colorkey_green: 0,
+				colorkey_blue: 0,
+				colorkey_threshold: 0.03
 			};
 
 			function onload() {
 
 				container = document.getElementById( 'container' );
 
-				renderer = new THREE.WebGLRenderer( { antialias: true, alpha: true } );
+				renderer = new THREE.WebGLRenderer( { antialias: true, alpha: true, preserveDrawingBuffer: true } );
 				renderer.setPixelRatio( window.devicePixelRatio );
 				renderer.setSize( resolutions[ state.resolution ][ 0 ], resolutions[ state.resolution ][ 1 ]  );
 				renderer.gammaOutput = true;
@@ -111,7 +125,7 @@
 					pmremGenerator.dispose();
 					pmremCubeUVPacker.dispose();
 
-					buildGUI();
+					build_gui();
 					initScene( scenes[ state.scene ] );
 					animate();
 
@@ -264,11 +278,25 @@
 					}
 
 					scene.add( object );
+
+					render_scene = new THREE.RenderPass(scene, camera);
+				
+					colorkey_pass = new THREE.ColorkeyPass();
+					composer = new THREE.EffectComposer(renderer);
+					composer.addPass( render_scene );
+					composer.addPass( colorkey_pass );
+					
+					state.colorkey_red = colorkey_pass.uniforms.colorkey.value.x;
+					state.colorkey_green = colorkey_pass.uniforms.colorkey.value.y;
+					state.colorkey_blue = colorkey_pass.uniforms.colorkey.value.z;
+					
 					select_strategy();
 					render_resize();
 
 				}, undefined, function ( error ) {
+					
 					console.error( error );
+					
 				} );
 
 			}
@@ -278,6 +306,8 @@
 				camera.aspect = resolutions[ state.resolution ][ 0 ] / resolutions[ state.resolution ][ 1 ];
 				camera.updateProjectionMatrix();
 				renderer.setSize( resolutions[ state.resolution ][ 0 ], resolutions[ state.resolution ][ 1 ]  );
+				//colorkey_pass.uniforms['resolution'].value.set( 1 / resolutions[ state.resolution ][ 0 ], 1 / resolutions[ state.resolution ][ 1 ] );
+				composer.setSize( resolutions[ state.resolution ][ 0 ], resolutions[ state.resolution ][ 1 ]  );
 				stop_animations();
 				
 				//camera.aspect = container.offsetWidth / container.offsetHeight;
@@ -298,12 +328,15 @@
 			}
 
 			function render() {
-
-				renderer.render( scene, camera );
+				
+				if ( composer ) {
+					composer.render();
+				}
+				//renderer.render( scene, camera );
 
 			}
 
-			function buildGUI() {
+			function build_gui() {
 
 				gui = new dat.GUI( { width: 330 } );
 				gui.domElement.parentElement.style.zIndex = 101;
@@ -317,11 +350,28 @@
 				var strategy_ctrl = gui.add( state, 'mask_strategy', mask_strategies );
 				strategy_ctrl.onChange( select_strategy );
 				
-				updateGUI();
+				var ppck_color_ctrl;
+				ppck_color_ctrl = gui.add( state, 'colorkey_red', 0, 1, 0.003921569  ).onChange( update_colorkey );
+				ppck_color_ctrl = gui.add( state, 'colorkey_green', 0, 1, 0.003921569  ).onChange( update_colorkey );
+				ppck_color_ctrl = gui.add( state, 'colorkey_blue', 0, 1, 0.003921569  ).onChange( update_colorkey );
+				ppck_color_ctrl = gui.add( state, 'colorkey_threshold', 0, 1, 0.003921569  ).onChange( update_colorkey );
+				
+				update_gui();
 
 			}
 
-			function updateGUI() {
+			function update_colorkey() {
+			
+				colorkey_pass.set_color( state.colorkey_red, state.colorkey_green, state.colorkey_blue );
+				colorkey_pass.set_threshold( state.colorkey_threshold );
+				colorkey_mat.color.r = state.colorkey_red * 255;
+				colorkey_mat.color.g = state.colorkey_green * 255;
+				colorkey_mat.color.b = state.colorkey_blue * 255;
+				colorkey_mat.needsUpate = true;
+			
+			}
+			
+			function update_gui() {
 
 				if ( ext_ctrl ) ext_ctrl.remove();
 
@@ -351,14 +401,20 @@
 				
 				// 'colorkey', 'hide'
 				
+				composer = new THREE.EffectComposer(renderer);
+				composer.addPass( render_scene );
+				
 				switch ( state.mask_strategy ) {
 					
 					case 'colorkey':
 						renderer.setClearColor( colorkey_color, 1 );
+						scene.fog = new THREE.Fog( colorkey_color, 40, 180 );
+						composer.addPass( colorkey_pass );
 						break;
 						
 					case 'hide':
 						renderer.setClearColor( 0x000000, 0 );
+						scene.fog = null;
 						break;
 				
 				}
@@ -411,7 +467,7 @@
 					
 				}
 				
-				updateGUI();
+				update_gui();
 				
 			}
 			
@@ -422,7 +478,7 @@
 					action.stop();
 				}
 				state.play_animation = false;
-				updateGUI();
+				update_gui();
 			}
 
 			function toggle_animations() {
@@ -437,7 +493,7 @@
 
 				if ( loader && mixer ) mixer.stopAllAction();
 
-				updateGUI();
+				update_gui();
 				initScene( scenes[ state.scene ] );
 
 			}
