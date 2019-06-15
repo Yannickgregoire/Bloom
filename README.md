@@ -53,6 +53,15 @@ contact: thomas.kjeldsen@alexandra.dk, could be solved by contacting him, but no
 
 profile on researchgate: https://www.researchgate.net/profile/Thomas_Kjeldsen
 
+### RaytracingRenderer of threejs
+
+test with the collada elf model provided with threejs on an i7 @ 3.4ghz
+
+- mesh: ~8k vertices & 14k faces
+- at 50% of the rendering, each tile takes +1200 seconds (~20 minutes!) to render at 18 x 15 (270) tiles
+
+the only solution available on mobile is not even usable on high-end laptops :)
+
 ## server
 
 Frames to be rendered on the client side are distributed through a webserver. For insctructions read web/README.md

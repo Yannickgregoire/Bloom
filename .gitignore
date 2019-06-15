@@ -1,7 +1,9 @@
 *.blend1
+tmp/*
 
 # builds
 web/dist
 
 # Dependency directories
 web/node_modules/
+
