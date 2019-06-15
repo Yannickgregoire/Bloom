@@ -52,3 +52,7 @@ BUT stucked by the limitation of memory due to compilation of the code using web
 contact: thomas.kjeldsen@alexandra.dk, could be solved by contacting him, but no garantee
 
 profile on researchgate: https://www.researchgate.net/profile/Thomas_Kjeldsen
+
+## server
+
+Frames to be rendered on the client side are distributed through a webserver. For insctructions read web/README.md

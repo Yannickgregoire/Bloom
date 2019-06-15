@@ -1,1 +1,7 @@
 *.blend1
+
+# builds
+web/dist
+
+# Dependency directories
+web/node_modules/
