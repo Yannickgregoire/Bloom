@@ -1,0 +1,80 @@
+// @import "reset";
+
+@font-face {
+  font-family: "roboto_ffibold";
+  src: url("/fonts/robotoffi-bold-webfont.woff2") format("woff2"),
+    url("/fonts/robotoffi-bold-webfont.woff") format("woff"),
+    url("/fonts/robotoffi-bold-webfont.svg#roboto_ffibold") format("svg");
+  font-weight: normal;
+  font-style: normal;
+}
+
+$base-font-size: 14px;
+$heading-scale: 4;
+
+body {
+  margin: 0;
+  padding: 0;
+  font-variant-ligatures: normal;
+  font-family: "Space Mono", monospace;
+  background-color: black;
+  color: white;
+  font-size: $base-font-size;
+  line-height: 1.4rem;
+}
+
+ul, li {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.canvas {
+  position: fixed;
+  width: 100vw;
+  height: 100vh;
+  top: 0;
+  left: 0;
+
+  .line {
+      height: 1vh;
+      transform: scaleY(0);
+      transition: all 500ms cubic-bezier(0.000, 1.005, 0.220, 1.000); 
+  }
+}
+
+.list {
+    position: relative;
+    margin: 5vw;
+    padding: 5vw;
+    width: 30vw;
+    background-color: black;
+    box-shadow: 0 0 10px 0 rgba(0,0,0,.8);
+    border-radius: 4px;
+  }
+
+  @media only screen and (min-width: 768px) {
+    .list {
+        width: 30vw;
+      }
+  }
+
+
+
+@for $i from 1 through 6 {
+  h#{$i} {
+    font-family: "roboto_ffibold";
+    font-weight: normal;
+    font-size: $base-font-size + $heading-scale * (6 - $i);
+    line-height: $base-font-size + $heading-scale * 1.4 * (6 - $i);
+    margin: 0;
+  }
+}
+
+.grey {
+  opacity: .2;
+}
+
+.blue {
+    color: #8ee8e9;
+}
