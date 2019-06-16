@@ -234,7 +234,7 @@ const init = () => {
     });
 
     renderer.setSize(window.innerWidth, window.innerHeight);
-
+    renderer.domElement.id = 'threejs';
     container.appendChild(renderer.domElement);
 
     window.addEventListener('resize', function () {
@@ -256,16 +256,11 @@ const updateWorkers = (x) => {
 }
 
 const render = () => {
-
     renderer.render(scene, camera);
-
 }
 
 const rearrange = (id) => {
-
-    console.log(id)
     camera.position.z = 600 - (id * 10);
-
 }
 
 export default class App extends Component {
@@ -280,11 +275,30 @@ export default class App extends Component {
         init();
 
         renderer.addEventListener('complete', () => {
-            this.frameComplete( this.state.frame );
+            this.frameComplete(this.state.frame);
         });
 
         this.subscribeToSocket();
         socket.emit('requestFrame')
+
+    }
+
+    postCanvasData = () => {
+
+        const canvasData = document.getElementById('threejs').toDataURL("image/png");
+
+        fetch('http://localhost:3000/upload', {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                data: canvasData,
+                filename: `frame-${this.state.frame}.png`,
+            })
+        })
+
     }
 
     subscribeToSocket = () => {
@@ -310,15 +324,14 @@ export default class App extends Component {
         });
 
         socket.on('frame', (frame) => {
-            console.log(frame);
             this.setState({ frame });
             rearrange(frame)
             render();
         });
     }
 
-    frameComplete = ( id ) => {
-        console.log('render complete')
+    frameComplete = (id) => {
+        this.postCanvasData();
         socket.emit('frameComplete', id)
     }
 
