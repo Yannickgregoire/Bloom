@@ -27,7 +27,15 @@ This server runs best with node > 10.
 
 ### installation
 
+#### mac
+
 Run `npm i`.
+
+#### linux
+
+```bash
+npm i -f
+```
 
 ### development
 
@@ -36,3 +44,9 @@ Run `npm run build` to build all resources, then run `npm run dev`, this will st
 ### build for production
 
 Run `npm run build`.
+
+### run
+
+```bash
+npm run server
+```
