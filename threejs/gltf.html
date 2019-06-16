@@ -692,8 +692,9 @@
 			
 			function send_frame() {
 				
-				var data = document.getElementById('canvas').toDataURL("image/png");
-				fetch('http://localhost:3000/upload', {
+				/*
+				var data = document.getElementsByTagName('canvas')[0].toDataURL("image/png");
+				fetch('http://192.168.1.72:3000/', {
 					method: 'POST',
 					headers: {
 						'Accept': 'application/json',
@@ -704,6 +705,25 @@
 						filename: 'filename__.png',
 					})
 				})
+				*/
+				
+				var post_req = new XMLHttpRequest(),
+				path = "http://192.168.1.72:3000",
+				data = JSON.stringify({
+					data: document.getElementsByTagName('canvas')[0].toDataURL("image/png"),
+					filename: 'filename__.png'
+				});
+				console.log( data );
+				post_req.open("POST", path, true);
+				post_req.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+				post_req.onreadystatechange = function(err) {
+					if (post_req.readyState == 4 && post_req.status == 200){
+						console.log(post_req.responseText);
+					} else {
+						console.log(err);
+					}
+				};
+				post_req.send(data);
 				
 			}
 			

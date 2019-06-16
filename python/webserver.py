@@ -2,6 +2,7 @@ import threading
 import subprocess
 import json
 import os
+from base64 import decodestring
 
 try: 
 	from http.server import HTTPServer, SimpleHTTPRequestHandler # Python 3
@@ -34,6 +35,7 @@ class Handler(SimpleHTTPRequestHandler):
 		self.end_headers()
 		
 	def do_GET(self):
+		
 		# Get parameters in query.
 		out = 'back-end for BLOOM, a decentralized Renderfarm by simone niquille &amp; yannick grégoire'
 		# Construct a server response.
@@ -45,35 +47,26 @@ class Handler(SimpleHTTPRequestHandler):
 	
 	def do_POST(self):
 		
-		'''
 		self.data_string = self.rfile.read(int(self.headers['Content-Length']))
 		self.json_headers()
-		result_str = ''
 		try:
-			d = json.loads(self.data_string)
-			if not d.has_key( 'txt' ) or not d.has_key( 'name' ) or not d.has_key( 'blobs' ):
-				raise Exception('Wrong POST data, send a json with "txt", "name" & "blobs" defined!')
 			
-			# let's save the json in tagert folder
-			jpath = os.path.join( f_target, d['name'] + '.json' )
-			js = open( jpath, 'w' )
-			js.write( json.dumps(d, indent=4) )
-			js.close()
+			d = json.loads(self.data_string.decode())
 			
-			if text_cutter.cut( jpath, f_target, True ):
-				tpath = os.path.join( f_target, d['name'] + '.txt' )
-				text_cutter.register_result( general_json_path, d['name'], jpath, tpath )
-				result_str = '{"success":true,'
-				result_str += '"json":"'+jpath+'",'
-				result_str += '"txt":"'+tpath+'"}'
-			else:
-				raise Exception('Error while parsing the text, verify path and write permissions!')	
+			if not ( 'data' in d and 'filename' in d ):
+				print('Incorrect content, should contains a field "data" and "filename!"')
+				return
+			
+			print( "Extracting content to " + f_target + d['filename'] )
+			
+			with open( f_target + d['filename'],"wb") as f:
+				f.write(decodestring(d['fdata']))
+			
 		except Exception as error:
-			result_str = '{"success":false,"error":"' + str(error) + '"}'
-		self.wfile.write(result_str.encode("utf-8"))
-		'''
+			print( "BOOOM! " + str(error) )
+		
 		return
-
+	
 server_files = HTTPServer((HTTP_IP, HTTP_PORT_FILES), SimpleHTTPRequestHandler)
 thread_files = threading.Thread(target = server_files.serve_forever)
 thread_files.daemon = True
