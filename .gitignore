@@ -1,5 +1,6 @@
 *.blend1
 tmp/*
+cache/*.png
 
 # builds
 web/dist
