@@ -1,11 +1,20 @@
+@font-face {
+    font-family: 'gap_sansbold';
+    src: url('../fonts/gapsansbold-webfont.woff2') format('woff2'),
+         url('../fonts/gapsansbold-webfont.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+}
+
 body {
 	margin: 0;
 	background-color: #000;
 	color: #fff;
 	font-family: Monospace;
-	font-size: 13px;
+	font-size: 14px;
 	line-height: 24px;
 	background: url( '../textures/abstract-geometric-pattern-background_1319-242.jpg' );
+	font-family: 'gap_sansbold', sans-serif;
 }
 
 a {
@@ -44,4 +53,12 @@ canvas {
 
 .dg.ac {
 	z-index: 2 !important; /* TODO Solve this in HTML */
+}
+
+.dg, .dg input, .dg select, .dg option, .dg optgroup {
+	font-family: 'gap_sansbold', sans-serif !important;
+	font-size: 13px !important;
+}
+.dg select {
+	margin: 0 !important;
 }
