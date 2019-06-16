@@ -285,7 +285,7 @@ export default class App extends Component {
 
     postCanvasData = () => {
 
-        var canvasData = document.getElementById('threejs').toDataURL("image/png");
+        const canvasData = document.getElementById('threejs').toDataURL("image/png");
 
         fetch('http://localhost:3000/upload', {
             method: 'POST',
