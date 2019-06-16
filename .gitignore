@@ -3,6 +3,7 @@ tmp/*
 
 # builds
 web/dist
+web/uploads
 
 # dependency directories
 web/node_modules/
