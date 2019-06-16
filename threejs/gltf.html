@@ -59,6 +59,7 @@
 				font: <a href="https://open-foundry.com/fonts/gap_sans_bold">Gap Sans</a><br />
 			</div>
 			<div id="description" style="visibility:hidden"></div>
+			<div id="tmp"><a href="javascript:send_frame()">pack</a></div>
 		</div>
 
 		<script src="js/three.js"></script>
@@ -687,6 +688,23 @@
 					composer.render();
 				}
 
+			}
+			
+			function send_frame() {
+				
+				var data = document.getElementById('canvas').toDataURL("image/png");
+				fetch('http://localhost:3000/upload', {
+					method: 'POST',
+					headers: {
+						'Accept': 'application/json',
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify({
+						data: data,
+						filename: 'filename__.png',
+					})
+				})
+				
 			}
 			
 			onload();
