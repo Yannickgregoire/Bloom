@@ -147,10 +147,9 @@ app.post('/upload', function (req, res, next) {
     var path = `${__dirname}/../uploads/${filename}`;
     fs.writeFile(path, data, "base64", function (err) {
         if (err) {
-            console.log(err);
-            res.send(500)
+            res.sendStatus(500)
         } else {
-            res.send(200);
+            res.sendStatus(200);
         }
     });
 
