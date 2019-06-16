@@ -27,6 +27,16 @@ This server runs best with node > 10.
 
 ### installation
 
+if you don't have homebrew nor node installed, install XCode, a terminal and type these command:
+
+```bash
+ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+brew update
+brew install node
+```
+
+source: [Installing Homebrew on a Mac](https://treehouse.github.io/installation-guides/mac/homebrew) and [Installing Node.js® and NPM on Mac](https://treehouse.github.io/installation-guides/mac/node-mac.html)
+
 #### mac
 
 Run `npm i`.
