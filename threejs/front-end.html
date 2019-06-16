@@ -659,7 +659,7 @@
 				if ( mixer && state.play ) {
 					if ( !state.render ) {
 						state.frame_current += 1;
-						if ( state.frame_current >= state.frame_end ) {
+						if ( state.frame_current > state.frame_end ) {
 							state.frame_current = state.frame_start;
 						}
 					}
@@ -713,7 +713,7 @@
 					
 					state.play = true;
 					state.frame_current += 1;
-					if ( state.frame_current >= state.frame_end ) {
+					if ( state.frame_current > state.frame_end ) {
 						state.frame_current = state.frame_start;
 						state.play = false;
 						state.render = false;
