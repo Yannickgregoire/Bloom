@@ -2,7 +2,8 @@ import threading
 import subprocess
 import json
 import os
-from base64 import decodestring
+import base64
+from PIL import Image
 
 try: 
 	from http.server import HTTPServer, SimpleHTTPRequestHandler # Python 3
@@ -57,16 +58,20 @@ class Handler(SimpleHTTPRequestHandler):
 				print('Incorrect content, should contains a field "data" and "filename!"')
 				return
 			
-			print( "Extracting content to " + f_target + d['filename'] )
+			tp = os.path.join( f_target, d['filename'] )
+			print( "Extracting content to " + tp )
+			print( "data: " )
+			print( d['data'][:100] )
 			
-			with open( f_target + d['filename'],"wb") as f:
-				f.write(decodestring(d['fdata']))
+			with open( tp,"wb" ) as f:
+				#f.write(base64.b64encode(bytes(d['data'], 'utf-8')))
+				f.write(bytes(d['data'], 'utf-8'))
 			
 		except Exception as error:
 			print( "BOOOM! " + str(error) )
 		
 		return
-	
+		
 server_files = HTTPServer((HTTP_IP, HTTP_PORT_FILES), SimpleHTTPRequestHandler)
 thread_files = threading.Thread(target = server_files.serve_forever)
 thread_files.daemon = True
