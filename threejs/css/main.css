@@ -29,12 +29,16 @@ canvas {
 }
 
 #info {
-	position: absolute;
+	/* 
+	position: absolute; 
 	top: 0px;
 	width: 100%;
 	padding: 10px;
 	box-sizing: border-box;
 	text-align: center;
+	*/
+	line-height: 18px;
+	margin: 0 0 0 20px;
 	z-index: 1; /* TODO Solve this in HTML */
 }
 

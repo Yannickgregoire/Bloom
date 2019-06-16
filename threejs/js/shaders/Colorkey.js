@@ -11,7 +11,7 @@ THREE.ColorkeyShader = {
 
 		"tDiffuse": { value: null },
 		"colorkey": { value: new THREE.Vector3( 0, 1, 1 ) },
-		"threshold": { value: 0.03 }
+		"threshold": { value: 0.3 }
 
 	},
 
