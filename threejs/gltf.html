@@ -468,7 +468,10 @@
 				render_object_ctrl = gui.add( state, 'render_object', Object.keys( renderable_objects ) );
 				render_object_ctrl.onChange( select_object );
 				
-				if ( state.render_object == undefined ) return;
+				if ( !state.render_object || state.render_object == 'none' ) { 
+					state.render_object = null;
+					return;
+				}
 				
 				if ( start_ctrl ) start_ctrl.remove();
 				start_ctrl = gui.add( state, 'frame_start', 0, state.frame_count, 1 );
@@ -577,7 +580,7 @@
 					return;
 					
 				} else {
-				
+					
 					for ( var k in renderable_objects ) {
 						if ( k == 'none' ) {
 							continue;
@@ -692,7 +695,7 @@
 				while( path.length < 6 ) {
 					path = '0' + path;
 				}
-				path += '.' + Date.now() + '.' + state.render_object.name + '.' + state.author.replace( ' ', '_' ) + '.png';
+				path += '.' + Date.now() + '.' + state.render_object + '.' + state.author.replace( ' ', '_' ) + '.png';
 				console.log( 'sending frame ' + path );
 				fetch('http://localhost:3000', {
 					
