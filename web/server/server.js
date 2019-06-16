@@ -1,7 +1,11 @@
-const app = require('express')();
+const express = require('express');
+const app = express();
+const fs = require('fs');
+
 const chalk = require('chalk');
 const http = require('http').Server(app);
 const io = require('socket.io')(http);
+const bodyparser = require('body-parser');
 
 let users = [];
 
@@ -20,9 +24,6 @@ const file = {
     title: '~/Movie_final-def_02_(edited)-final_export.mp4'
 };
 
-let chunk = 0;
-let progress = 0;
-
 const messages = {
     connected: 'a user connected',
     disconnected: 'a user disconnected'
@@ -34,40 +35,38 @@ io.sockets.on('connection', function (socket) {
 
 function connect(socket) {
 
-    socket.on('disconnect', function () {
-        disconnect(socket);
-    });
-
-    socket.on('progress', function () {
-        onProgress(socket);
-    });
-
-    socket.on('requestFrame', function () {
-        onRequestFrame(socket);
-    });
-
-    socket.on('frameComplete', function (id) {
-        onFrameComplete(socket, id);
-    });
-
     registerUser(socket);
+    addEventListeners(socket);
 
     io.sockets.emit('users', users);
-
     log(chalk.green(messages.connected));
     log(chalk.blue('users: ' + users.length));
-    log(chalk.green(socket.id));
 
 }
 
 function disconnect(socket) {
 
     unregisterUser(socket)
-    io.sockets.emit('users', users);
+    resetUncompletedFrames(socket);
 
+    io.sockets.emit('users', users);
     log(chalk.red('a user disconnected'));
 
-    onUncompleteFrame(socket.id);
+}
+
+function addEventListeners(socket) {
+
+    socket.on('disconnect', function () {
+        disconnect(socket);
+    });
+
+    socket.on('requestFrame', function () {
+        handleRequestFrame(socket);
+    });
+
+    socket.on('frameComplete', function (id) {
+        handleFrameComplete(socket, id);
+    });
 
 }
 
@@ -79,83 +78,83 @@ function unregisterUser(socket) {
     users = users.filter(s => socket.id !== s.id);
 }
 
-function onProgress(socket) {
-    progress += increment;
-    if (progress > 100) {
-        chunk++;
-        progress = 0;
-        file.image = getGradient();
-
-        io.sockets.emit('file', file);
-        io.sockets.emit('chunk', chunk);
-    }
-}
-
-function onRequestFrame(socket) {
+function handleRequestFrame(socket) {
     const frame = getUnrenderedFrame();
-
     if (frame) {
         frame.rendering = true;
-        frame.socket = socket.id;
+        frame.socket = socket;
         socket.emit('frame', frame.id);
     }
-
 }
 
-function onFrameComplete(socket, id) {
-    
+function handleFrameComplete(socket, id) {
+    log(chalk.magenta(`frame complete: ${id}`));
     const frame = getFrameByID(id);
-
     frames.map((frame) => {
         if (frame.id === id) {
             frame.rendering = false;
             frame.rendered = true;
         }
     })
-
-    onRequestFrame(socket);
-
+    handleRequestFrame(socket);
 }
 
-function onUncompleteFrame(id) {
-
-    const frames = getFramesBySocket(id);
-
+function resetUncompletedFrames(socket) {
+    const frames = getFramesBySocketID(socket.id);
     if (frames) {
         frames.map(frame => {
-
             if (frame.rendering) {
                 frame.rendering = false;
                 frame.rendered = false;
                 frame.socket = undefined;
             }
-
         })
     }
-
 }
 
 function getUnrenderedFrame() {
     return frames.filter(frame => frame.rendered === false && frame.rendering === false)[0];
 }
 
-function getIndexForFrameID(id) {
-    return frames.map(frame => {
-        if (frame.id === id) return id;
-    })
-}
-
 function getFrameByID(id) {
     return frames.filter(frame => frame.id === id)[0];
 }
 
-function getFramesBySocket(socket) {
-    return frames.filter(frame => frame.socket === socket);
+function getFramesBySocketID(id) {
+    return frames.filter(frame => frame.socket ? frame.socket.id === id : false);
 }
 
 function log(message) {
     console.log(`[${new Date().toISOString()}] ${message}`)
 }
+
+
+app.use(bodyparser.json({ limit: "1000mb" }));
+app.use(bodyparser.urlencoded({ extended: false, limit: '1000mb', parameterLimit: 1000000 }));
+
+app.use(function (req, res, next) {
+    res.setHeader('Access-Control-Allow-Origin', 'http://localhost:8080');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
+    res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type');
+    res.setHeader('Access-Control-Allow-Credentials', true);
+    next();
+});
+
+app.post('/upload', function (req, res, next) {
+
+    var filename = req.body.filename;
+    var data = req.body.data.replace(/^data:image\/png;base64,/, "");
+    var path = `${__dirname}/../uploads/${filename}`;
+    fs.writeFile(path, data, "base64", function (err) {
+        if (err) {
+            console.log(err);
+            res.send(500)
+        } else {
+            res.send(200);
+        }
+    });
+
+})
 
 http.listen(3000, function () {
     log(chalk.blue('listening on *:3000'));

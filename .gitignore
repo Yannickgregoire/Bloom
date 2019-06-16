@@ -4,6 +4,5 @@ tmp/*
 # builds
 web/dist
 
-# Dependency directories
+# dependency directories
 web/node_modules/
-
