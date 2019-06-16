@@ -697,7 +697,7 @@
 				}
 				path += '.' + Date.now() + '.' + state.render_object + '.' + state.author.replace( ' ', '_' ) + '.png';
 				console.log( 'sending frame ' + path );
-				fetch('http://localhost:3000/upload', {
+				fetch('http://localhost:3000', {
 					
 					method: 'POST',
 					headers: {
