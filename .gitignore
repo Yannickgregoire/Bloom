@@ -3,7 +3,12 @@ tmp/*
 
 # builds
 web/dist
-web/uploads
+web/uploads/*.png
+web/uploads/*.jpg
+web/uploads/*.jpeg
+web/uploads/*.bmp
+web/uploads/*.tif
+web/uploads/*.tiff
 
 # dependency directories
 web/node_modules/
