@@ -139,7 +139,8 @@
 				frame_start: 0,
 				frame_end: 0,
 				play: false,
-				render: false
+				render: false,
+				author: ''
 			};
 
 			function onload() {
@@ -176,6 +177,10 @@
 					pmremGenerator.dispose();
 					pmremCubeUVPacker.dispose();
 
+					if ( state.author == '' ) {
+						state.author = 'generic_' + Date.now();
+					}
+					
 					build_gui();
 					init_scene( scenes[ state.scene ] );
 					animate();
@@ -372,6 +377,8 @@
 				gui = new dat.GUI( { width: 330 } );
 				gui.domElement.parentElement.style.zIndex = 101;
 
+				var author_ctrl = gui.add( state, 'author' );
+				
 				var resolution_ctrl = gui.add( state, 'resolution', Object.keys( resolutions ) );
 				resolution_ctrl.onChange( render_resize );
 				
