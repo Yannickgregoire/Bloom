@@ -33,10 +33,15 @@ def generate_frame_cache( i ):
 	if len( pf[ 'subs' ] ) == 0:
 		img = Image.new('RGBA', (RESOLUTION[0],RESOLUTION[1]), (0,0,0,255))
 		img.save( fname, "PNG" )
+		return True
 	
 	if len( pf[ 'subs' ] ) == 1:
-		shutil.copyfile( os.path.join( CACHE_FOLDER, pf[ 'subs' ][0] ), fname )
-		return
+		img = Image.open( os.path.join( FRAME_FOLDER, pf[ 'subs' ][0] ) )
+		lw, lh = img.size
+		if lw != RESOLUTION[0] or lh != RESOLUTION[1]:
+			img = img.resize( RESOLUTION, Image.NEAREST)
+		img.save( fname, "PNG" )
+		return True
 	
 	img = Image.new('RGBA', (RESOLUTION[0],RESOLUTION[1]), (0,0,0,255))
 	
@@ -98,7 +103,7 @@ for i in range( last_frame ):
 
 # and, last but not least, let's compress a video!!!!
 if cache_successfull:
-	video_path = os.path.abspath( os.path.join( tmp_folder, unique + '.mp4' ) )
+	video_path = os.path.abspath( os.path.join( CACHE_FOLDER, unique + '.mp4' ) )
 	tmp_folder = os.path.abspath( tmp_folder )
 	cmd = 'ffmpeg -f image2 -framerate 25 -r 25 -i ' + tmp_folder + '/%6d.png -an -q:v 1 -threads 3 ' + video_path
 	subprocess.call( cmd.split( ' ' ) )
